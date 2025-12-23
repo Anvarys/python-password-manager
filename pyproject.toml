@@ -1,14 +1,15 @@
 [project]
-name = "python-password-manager"
+name = "ospm"
 version = "0.1.0"
-description = ""
+description = "Open Source password manager"
 authors = [
     {name = "Anvarys",email = "105349498+Anvarys@users.noreply.github.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 dependencies = [
 ]
+packages = [{include = "ospm"}]
 
 
 [build-system]

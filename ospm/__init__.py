@@ -1,0 +1,1 @@
+print("\033[94mUse \"python -m ospm\" to launch the python password manager")
