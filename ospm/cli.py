@@ -1,6 +1,8 @@
-from generate import generate_password
+from .generate import generate_password
 from clipboard import copy
 import click
+from .vault import Vault, get_vault
+from getpass import getpass
 
 
 @click.group()
@@ -12,7 +14,8 @@ def main():
 @click.argument("name")
 @click.option("--password", "-p")
 def add(name, password):
-    print(name, password)
+    if password is None:
+        password = generate_password()
 
 
 @click.command("delete")
