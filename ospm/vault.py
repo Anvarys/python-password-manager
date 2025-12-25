@@ -60,7 +60,7 @@ def decrypt(key: bytes, cipher: bytes) -> bytes:
     try:
         return SecretBox(key).decrypt(cipher)
     except CryptoError:
-        print("\033[91mError: wrong master password")
+        print("\033[91mError: Wrong master password\033[0m")
         exit()
 
 
@@ -100,3 +100,10 @@ def get_vault(master_password: str, vault_name: str = "vault.ospm") -> Vault:
             get_vault_file_data(vault_name)
         )
     )
+
+
+def is_vault_initialised(vault_name: str = "vault.ospm"):
+    if not Path.is_dir(data_dir):
+        data_dir.mkdir(parents=True)
+
+    return Path.exists(data_dir / vault_name)

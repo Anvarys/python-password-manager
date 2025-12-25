@@ -3,7 +3,7 @@ from clipboard import copy
 import click
 
 from ospm.apps import ListApp, DeleteApp
-from vault import Vault, get_vault, verify_vault_initialised
+from vault import Vault, get_vault, verify_vault_initialised, is_vault_initialised
 from getpass import getpass
 
 
@@ -75,10 +75,28 @@ def get_list():
 
 @click.command("init")
 def init():
-    Vault("vault").save_vault(getpass("Master password: "))
-    print("Vault initialised!")
+    if is_vault_initialised():
+        print("Your vault is already initialised!")
+    else:
+        Vault("vault").save_vault(getpass("Master password: "))
+        print("Vault initialised!")
 
 
+@click.command("changepass")
+def change_pass():
+    v = get_vault(getpass("Old master password: "))
+    n_mp = getpass("New master password: ")
+    if not getpass("Confirm new master password: ") == n_mp:
+        print("\033[91mError: New master password doesn't match\033[0m")
+        del v, n_mp
+        return
+
+    v.save_vault(n_mp)
+    del v, n_mp
+    print("Master password changed successfully!")
+
+
+main.add_command(change_pass)
 main.add_command(add)
 main.add_command(delete)
 main.add_command(generate)

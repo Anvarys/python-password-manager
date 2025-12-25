@@ -1,7 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.widgets import ListView, ListItem, Label, Button
 from vault import PasswordEntry
-from textual.containers import Vertical
+from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
 from textual.worker import Worker, get_current_worker
 
@@ -14,7 +14,31 @@ c = {
 
 
 class Confirm(ModalScreen[bool]):
-    CSS = ""
+    BINDINGS = [
+        ("left", "prev", "Previous"),
+        ("right", "next", "Next"),
+    ]
+
+    CSS = """
+        #dialog {
+            padding: 2;
+            background: $panel;
+            border: thick $error;
+            width: 100%;
+            align: center middle;
+        }
+
+        #message {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 1;
+        }
+
+        #buttons {
+            width: 100%;
+            align: center middle;
+        }
+        """
 
     def __init__(self, message: str):
         super().__init__()
@@ -22,9 +46,16 @@ class Confirm(ModalScreen[bool]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
-            yield Label(self.message)
-            yield Button("Yes", id="yes", variant="error")
-            yield Button("No", id="no")
+            yield Label(self.message, id="message")
+            with Horizontal(id="buttons"):
+                yield Button("Yes", id="yes", variant="error")
+                yield Button("No", id="no")
+
+    def action_next(self) -> None:
+        self.focus_next()
+
+    def action_prev(self) -> None:
+        self.focus_previous()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.dismiss(event.button.id == "yes")
@@ -32,13 +63,6 @@ class Confirm(ModalScreen[bool]):
 
 class ListApp(App):
     CSS = """
-    #dialog {
-        padding: 2;
-        background: $panel;
-        border: thick $error;
-        width: 50%;
-        align: center middle;
-    }
     """
 
     def __init__(self, items: list[PasswordEntry]):
