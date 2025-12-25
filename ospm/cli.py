@@ -1,6 +1,8 @@
 from generate import generate_password
 from clipboard import copy
 import click
+
+from ospm.apps import ListApp
 from vault import Vault, get_vault, verify_vault_initialised
 from getpass import getpass
 
@@ -65,8 +67,9 @@ def generate(amount, length):
 @click.command("list")
 def get_list():
     verify_vault_initialised()
-
-    print("\n".join(f"{i}. {pass_entry.name} | {pass_entry.account} - {pass_entry.password}" for i, pass_entry in enumerate(get_vault(getpass("Master password: ")).passwords)))
+    listapp = ListApp(get_vault(getpass("Master password: ")).passwords)
+    listapp.run()
+    #print("\n".join(f"{i}. {pass_entry.name} | {pass_entry.account} - {pass_entry.password}" for i, pass_entry in enumerate(get_vault(getpass("Master password: ")).passwords)))
 
 
 @click.command("init")
