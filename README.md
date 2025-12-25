@@ -1,6 +1,6 @@
 ## Open source python password manager
 
-### Installation
+### Installation (NOT YET AVAILABLE)
 
 1. You need to have [python](https://python.org) installed
 2. Run this command in your terminal `pip install ospm`

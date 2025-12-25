@@ -2,7 +2,7 @@ from generate import generate_password
 from clipboard import copy
 import click
 
-from ospm.apps import ListApp
+from ospm.apps import ListApp, DeleteApp
 from vault import Vault, get_vault, verify_vault_initialised
 from getpass import getpass
 
@@ -39,14 +39,15 @@ def add(name, account, password, note):
 def delete(pid):
     verify_vault_initialised()
 
-    if pid is None:
-        pass  # TODO choosing logic
-
     mp = getpass("Master password: ")
     v = get_vault(mp)
-    v.delete_password(int(pid))
-    v.save_vault(mp)
-    del mp, v
+
+    if pid is None:
+        DeleteApp(v.passwords).run()
+    else:
+        v.delete_password(int(pid))
+        v.save_vault(mp)
+        del mp, v
 
 
 @click.command("gen")

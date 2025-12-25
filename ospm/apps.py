@@ -3,6 +3,7 @@ from textual.widgets import ListView, ListItem, Label, Button
 from vault import PasswordEntry
 from textual.containers import Vertical
 from textual.screen import ModalScreen
+from textual.worker import Worker, get_current_worker
 
 c = {
     "index": "#0a5c7a",
@@ -12,15 +13,37 @@ c = {
 }
 
 
+class Confirm(ModalScreen[bool]):
+    CSS = ""
+
+    def __init__(self, message: str):
+        super().__init__()
+        self.message = message
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dialog"):
+            yield Label(self.message)
+            yield Button("Yes", id="yes", variant="error")
+            yield Button("No", id="no")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(event.button.id == "yes")
+
+
 class ListApp(App):
     CSS = """
-    
+    #dialog {
+        padding: 2;
+        background: $panel;
+        border: thick $error;
+        width: 50%;
+        align: center middle;
+    }
     """
 
-    def __init__(self, items: list[PasswordEntry], func_on_click=None):
+    def __init__(self, items: list[PasswordEntry]):
         super().__init__()
 
-        self.func_on_click = func_on_click
         self.items = items
 
     def compose(self) -> ComposeResult:
@@ -28,9 +51,22 @@ class ListApp(App):
         yield self.list_view
 
     def on_mount(self) -> None:
+        self.set_focus(self.query_one(ListView))
         self.refresh_list()
 
     def refresh_list(self) -> None:
         self.list_view.clear()
         for i, item in enumerate(self.items):
             self.list_view.append(ListItem(Label(f"[{c['index']}]{i}.[/{c['index']}] [{c['name']}]{item.name}[/{c['name']}] | [{c['account']}]{item.account}[/{c['account']}] - [{c['password']}]{item.password}[/{c['password']}]")))
+
+
+class DeleteApp(ListApp):
+
+    async def on_list_view_selected(self, event: ListView.Selected) -> None:
+        self.run_worker(self.confirm_delete(event.list_view.index))
+
+    async def confirm_delete(self, index: int):
+        confirm = await self.push_screen_wait(Confirm(f"Confirm deletion of \"{self.items[index].name} - {self.items[index].account}\""))
+        if confirm:
+            del self.items[index]
+            self.refresh_list()
