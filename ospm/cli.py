@@ -2,13 +2,15 @@ from generate import generate_password
 from clipboard import copy
 import click
 
-from ospm.apps import ListApp, DeleteApp
+from config import Config
+from ospm.apps import ListApp, DeleteApp, ConfigApp
 from vault import Vault, get_vault, verify_vault_initialised, is_vault_initialised
 from getpass import getpass
 
 
 @click.group()
-def main():
+@click.pass_context
+def cli(ctx):
     pass
 
 
@@ -52,8 +54,11 @@ def delete(pid):
 
 @click.command("gen")
 @click.argument("amount", default=1)
-@click.option("--length", "-l", default=16)
+@click.option("--length", "-l")
 def generate(amount, length):
+    if length is None:
+        length = Config().default_password_length
+
     if amount == 1:
         password = generate_password(length)
         copy(password)
@@ -70,7 +75,6 @@ def get_list():
     verify_vault_initialised()
     listapp = ListApp(get_vault(getpass("Master password: ")).passwords)
     listapp.run()
-    #print("\n".join(f"{i}. {pass_entry.name} | {pass_entry.account} - {pass_entry.password}" for i, pass_entry in enumerate(get_vault(getpass("Master password: ")).passwords)))
 
 
 @click.command("init")
@@ -96,12 +100,18 @@ def change_pass():
     print("Master password changed successfully!")
 
 
-main.add_command(change_pass)
-main.add_command(add)
-main.add_command(delete)
-main.add_command(generate)
-main.add_command(init)
-main.add_command(get_list)
+@click.command("config")
+def config():
+    ConfigApp().run()
+
+
+cli.add_command(change_pass)
+cli.add_command(add)
+cli.add_command(delete)
+cli.add_command(generate)
+cli.add_command(init)
+cli.add_command(get_list)
+cli.add_command(config)
 
 if __name__ == "__main__":
-    main()
+    cli()

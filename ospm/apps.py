@@ -3,6 +3,7 @@ from textual.widgets import ListView, ListItem, Label, Button
 from vault import PasswordEntry
 from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
+from config import Config
 from textual.worker import Worker, get_current_worker
 
 c = {
@@ -94,3 +95,25 @@ class DeleteApp(ListApp):
         if confirm:
             del self.items[index]
             self.refresh_list()
+
+
+class ConfigApp(App):
+    CSS = """ """
+
+    def __init__(self):
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        self.list_view = ListView()
+        yield self.list_view
+
+    def on_mount(self) -> None:
+        self.set_focus(self.query_one(ListView))
+        self.refresh_list()
+
+    def refresh_list(self) -> None:
+        self.list_view.clear()
+        for item in Config().__dict__().items():
+            self.list_view.append(ListItem(Label(
+                f"[{c['name']}]{item[0]}[/{c['name']}] = [{c['password']}]{item[1]}[/{c['password']}]"
+            )))
