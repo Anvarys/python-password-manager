@@ -102,6 +102,7 @@ class ConfigApp(App):
 
     def __init__(self):
         super().__init__()
+        self.result = None
 
     def compose(self) -> ComposeResult:
         self.list_view = ListView()
@@ -117,3 +118,7 @@ class ConfigApp(App):
             self.list_view.append(ListItem(Label(
                 f"[{c['name']}]{item[0]}[/{c['name']}] = [{c['password']}]{item[1]}[/{c['password']}]"
             )))
+
+    async def on_list_view_selected(self, event: ListView.Selected) -> None:
+        self.result = list(Config().__dict__().items())[event.list_view.index]
+        await self.action_quit()

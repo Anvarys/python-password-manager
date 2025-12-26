@@ -102,7 +102,17 @@ def change_pass():
 
 @click.command("config")
 def config():
-    ConfigApp().run()
+    configApp = ConfigApp()
+    configApp.run()
+    if configApp.result is None:
+        return
+    value = input(f"{configApp.result[0]}: ")
+    cfg = Config()
+    match configApp.result[0]:
+        case "default_password_length":
+            cfg.default_password_length = int(value)
+    cfg.save()
+    print("Successfully modified config!")
 
 
 cli.add_command(change_pass)
