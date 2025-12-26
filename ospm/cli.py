@@ -1,10 +1,10 @@
-from generate import generate_password
+from .generate import generate_password
 from clipboard import copy
 import click
 
-from config import Config
+from .config import Config
 from ospm.apps import ListApp, DeleteApp, ConfigApp
-from vault import Vault, get_vault, verify_vault_initialised, is_vault_initialised
+from .vault import Vault, get_vault, verify_vault_initialised, is_vault_initialised
 from getpass import getpass
 
 
@@ -82,7 +82,12 @@ def init():
     if is_vault_initialised():
         print("Your vault is already initialised!")
     else:
-        Vault("vault").save_vault(getpass("Master password: "))
+        mp = getpass("Master password: ")
+        if not getpass("Confirm master password: ") == mp:
+            print("\033[91mError: Master passwords doesn't match\033[0m")
+            del mp
+            return
+        Vault("vault").save_vault(mp)
         print("Vault initialised!")
 
 

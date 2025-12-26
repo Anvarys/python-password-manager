@@ -1,9 +1,9 @@
 from textual.app import App, ComposeResult
 from textual.widgets import ListView, ListItem, Label, Button
-from vault import PasswordEntry
+from .vault import PasswordEntry
 from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
-from config import Config
+from .config import Config
 from textual.worker import Worker, get_current_worker
 
 c = {
