@@ -1,3 +1,4 @@
+import clipboard
 from textual.app import App, ComposeResult
 from textual.widgets import ListView, ListItem, Label, Button
 from .vault import PasswordEntry
@@ -10,7 +11,8 @@ c = {
     "index": "#0a5c7a",
     "password": "#f5bc42",
     "name": "#42c5f5",
-    "account": "#4275f5"
+    "account": "#99f50c",
+    "note": "#3b533c",
 }
 
 
@@ -82,7 +84,11 @@ class ListApp(App):
     def refresh_list(self) -> None:
         self.list_view.clear()
         for i, item in enumerate(self.items):
-            self.list_view.append(ListItem(Label(f"[{c['index']}]{i}.[/{c['index']}] [{c['name']}]{item.name}[/{c['name']}] | [{c['account']}]{item.account}[/{c['account']}] - [{c['password']}]{item.password}[/{c['password']}]")))
+            self.list_view.append(ListItem(Label(f"[{c['index']}]{i}.[/{c['index']}] [{c['name']}]{item.name}[/{c['name']}] | [{c['account']}]{item.account}[/{c['account']}] - [{c['password']}]{item.password}[/{c['password']}]" + ("" if item.note == "" else f" [{c['note']}]{item.note}[/{c['note']}]"))))
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        clipboard.copy(self.items[event.list_view.index].password)
+        self.notify(f"[{c['account']}]Password Copied![/{c['account']}]")
 
 
 class DeleteApp(ListApp):

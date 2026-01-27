@@ -29,7 +29,7 @@ def add(name, account, password, note):
 
     mp = getpass("Master password: ")
     v = get_vault(mp)
-    v.add_password(password=password, name=name, account=account)
+    v.add_password(password=password, name=name, account=account, note=note)
     v.save_vault(mp)
     del mp, v
 

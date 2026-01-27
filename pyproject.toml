@@ -1,6 +1,6 @@
 [project]
 name = "ospm"
-version = "1.0.1"
+version = "1.0.2"
 description = "Open Source password manager"
 authors = [
     {name = "Anvarys",email = "105349498+Anvarys@users.noreply.github.com"}
