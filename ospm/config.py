@@ -10,12 +10,18 @@ class Config:
     def __init__(self, from_file: bool = True):
         if not from_file:
             self.default_password_length = 16
+            self.password_ascii = True
+            self.password_punctuation = False
+            self.password_digits = True
         else:
             if not self.exists():
                 self.init()
             with open(data_dir / config_filename, "r") as f:
                 obj = json.loads(f.read())
                 self.default_password_length = obj["default_password_length"]
+                self.password_ascii = obj["gen_pass_ascii_letters"]
+                self.password_digits = obj["gen_pass_digits"]
+                self.password_punctuation = obj["gen_pass_punctuation"]
 
     @classmethod
     def exists(cls) -> bool:
@@ -37,5 +43,8 @@ class Config:
 
     def __dict__(self) -> dict:
         return {
-            "default_password_length": self.default_password_length
+            "default_password_length": self.default_password_length,
+            "gen_pass_ascii_letters": self.password_ascii,
+            "gen_pass_punctuation": self.password_punctuation,
+            "gen_pass_digits": self.password_digits
         }

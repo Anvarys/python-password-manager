@@ -3,7 +3,7 @@ from clipboard import copy
 import click
 
 from .config import Config
-from ospm.apps import ListApp, DeleteApp, ConfigApp, ModifyApp
+from .apps import ListApp, DeleteApp, ConfigApp, ModifyApp
 from .vault import Vault, get_vault, verify_vault_initialised, is_vault_initialised
 from getpass import getpass
 
@@ -19,11 +19,12 @@ def cli(ctx):
 @click.argument("account")
 @click.option("--password", "-p")
 @click.option("--note", "-n")
-def add(name, account, password, note):
+@click.option("--length", "-l")
+def add(name, account, password, note, length):
     verify_vault_initialised()
 
     if password is None:
-        password = generate_password()
+        password = generate_password(length or Config().default_password_length)
         print(f"Copied to clipboard generated password: {password}")
         copy(password)
 
@@ -31,7 +32,7 @@ def add(name, account, password, note):
     v = get_vault(mp)
     v.add_password(password=password, name=name, account=account, note=note)
     v.save_vault(mp)
-    del mp, v
+    del mp, v, password
 
     print(f"Added new password for \"{name}\", account \"{account}\"")
 
@@ -111,11 +112,20 @@ def config():
     configApp.run()
     if configApp.result is None:
         return
-    value = input(f"{configApp.result[0]}: ")
     cfg = Config()
     match configApp.result[0]:
         case "default_password_length":
+            value = input(f"{configApp.result[0]} (ex: 16): ")
             cfg.default_password_length = int(value)
+        case "gen_pass_digits":
+            value = input(f"{configApp.result[0]} (0 or 1): ")
+            cfg.password_digits = bool(int(value))
+        case "gen_pass_ascii_letters":
+            value = input(f"{configApp.result[0]} (0 or 1): ")
+            cfg.password_ascii = bool(int(value))
+        case "gen_pass_punctuation":
+            value = input(f"{configApp.result[0]} (0 or 1): ")
+            cfg.password_punctuation = bool(int(value))
     cfg.save()
     print("Successfully modified config!")
 
@@ -123,7 +133,8 @@ def config():
 @click.command("modify")
 @click.option("--pid", "-i")
 @click.option("--change", "-c")
-def modify(pid, change):
+@click.option("--to", "-t")
+def modify(pid, change, to):
     verify_vault_initialised()
 
     mp = getpass("Master password: ")
@@ -143,26 +154,26 @@ def modify(pid, change):
 
     match change:
         case "1":
-            new_password = input("Set your new password for this entry (Press Enter to generate): ")
+            new_password = input("Set your new password for this entry (Press Enter to generate): ") if to is None else to
             if new_password is "":
                 new_password = generate_password(Config().default_password_length)
 
             v.passwords[int(pid)].password = new_password
         case "2":
-            new_name = input("Set your new name of this entry (ex: example.com): ")
+            new_name = input("Set your new name of this entry (ex: example.com): ") if to is None else to
             v.passwords[int(pid)].name = new_name
         case "3":
-            new_account = input("Set your new account name for this entry (ex: your.email@example.com): ")
+            new_account = input("Set your new account name for this entry (ex: your.email@example.com): ") if to is None else to
             v.passwords[int(pid)].account = new_account
         case "4":
-            new_note = input("Set your new note for this entry (ex: example.com): ")
+            new_note = input("Set your new note for this entry (ex: example.com): ") if to is None else to
             v.passwords[int(pid)].note = new_note
 
     v.save_vault(mp)
 
     del v, mp, password_list_app
 
-    print("Successfully modified entry!")
+    print("Successfully modified a password entry!")
 
 
 cli.add_command(modify)

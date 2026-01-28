@@ -1,8 +1,14 @@
 from secrets import choice
-from string import ascii_letters, digits
+from string import ascii_letters, digits, punctuation
+from .config import Config
 
-chars = ascii_letters + digits
 
+def generate_password(length: int = None):
+    config = Config()
 
-def generate_password(length: int = 16):
+    if length is None:
+        length = config.default_password_length
+
+    chars = (ascii_letters if config.password_ascii else "") + (digits if config.password_digits else "") + (punctuation if config.password_punctuation else "")
+
     return ''.join(choice(chars) for _ in range(length))
