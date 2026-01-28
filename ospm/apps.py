@@ -5,7 +5,6 @@ from .vault import PasswordEntry
 from textual.containers import Vertical, Horizontal
 from textual.screen import ModalScreen
 from .config import Config
-from textual.worker import Worker, get_current_worker
 
 c = {
     "index": "#0a5c7a",
@@ -86,13 +85,12 @@ class ListApp(App):
         for i, item in enumerate(self.items):
             self.list_view.append(ListItem(Label(f"[{c['index']}]{i}.[/{c['index']}] [{c['name']}]{item.name}[/{c['name']}] | [{c['account']}]{item.account}[/{c['account']}] - [{c['password']}]{item.password}[/{c['password']}]" + ("" if item.note == "" else f" [{c['note']}]{item.note}[/{c['note']}]"))))
 
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
+    async def on_list_view_selected(self, event: ListView.Selected) -> None:
         clipboard.copy(self.items[event.list_view.index].password)
         self.notify(f"[{c['account']}]Password Copied![/{c['account']}]")
 
 
 class DeleteApp(ListApp):
-
     async def on_list_view_selected(self, event: ListView.Selected) -> None:
         self.run_worker(self.confirm_delete(event.list_view.index))
 
@@ -101,6 +99,13 @@ class DeleteApp(ListApp):
         if confirm:
             del self.items[index]
             self.refresh_list()
+
+
+class ModifyApp(ListApp):
+
+    async def on_list_view_selected(self, event: ListView.Selected) -> None:
+        self.index = event.list_view.index
+        await self.action_quit()
 
 
 class ConfigApp(App):

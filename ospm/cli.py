@@ -3,7 +3,7 @@ from clipboard import copy
 import click
 
 from .config import Config
-from ospm.apps import ListApp, DeleteApp, ConfigApp
+from ospm.apps import ListApp, DeleteApp, ConfigApp, ModifyApp
 from .vault import Vault, get_vault, verify_vault_initialised, is_vault_initialised
 from getpass import getpass
 
@@ -120,6 +120,52 @@ def config():
     print("Successfully modified config!")
 
 
+@click.command("modify")
+@click.option("--pid", "-i")
+@click.option("--change", "-c")
+def modify(pid, change):
+    verify_vault_initialised()
+
+    mp = getpass("Master password: ")
+    v = get_vault(mp)
+
+    if pid is None:
+        password_list_app = ModifyApp(v.passwords)
+        password_list_app.run()
+        pid = password_list_app.index
+
+    if change is None:
+        change = input(f"Modify it's [1] Password [2] Name [3] Account [4] Note: ")
+
+    while change not in ["1", "2", "3", "4"]:
+        print("\033[91mError: Please enter one of available options 1-4\033[0m")
+        change = input(f"Modify it's [1] Password [2] Name [3] Account [4] Note: ")
+
+    match change:
+        case "1":
+            new_password = input("Set your new password for this entry (Press Enter to generate): ")
+            if new_password is "":
+                new_password = generate_password(Config().default_password_length)
+
+            v.passwords[int(pid)].password = new_password
+        case "2":
+            new_name = input("Set your new name of this entry (ex: example.com): ")
+            v.passwords[int(pid)].name = new_name
+        case "3":
+            new_account = input("Set your new account name for this entry (ex: your.email@example.com): ")
+            v.passwords[int(pid)].account = new_account
+        case "4":
+            new_note = input("Set your new note for this entry (ex: example.com): ")
+            v.passwords[int(pid)].note = new_note
+
+    v.save_vault(mp)
+
+    del v, mp, password_list_app
+
+    print("Successfully modified entry!")
+
+
+cli.add_command(modify)
 cli.add_command(change_pass)
 cli.add_command(add)
 cli.add_command(delete)
