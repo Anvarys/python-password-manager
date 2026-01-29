@@ -4,7 +4,7 @@ import click
 
 from .config import Config
 from .apps import ListApp, DeleteApp, ConfigApp, ModifyApp
-from .vault import Vault, get_vault, verify_vault_initialised, is_vault_initialised
+from .vault import Vault, get_vault, verify_vault_initialised, is_vault_initialised, data_dir
 from getpass import getpass
 
 
@@ -25,7 +25,10 @@ def add(name, account, password, note, length):
 
     if password is None:
         password = generate_password(length or Config().default_password_length)
-        print(f"Copied to clipboard generated password: {password}")
+        if Config().show_password_on_auto_generation:
+            print(f"Copied to clipboard generated password: {password}")
+        else:
+            print(f"Copied to clipboard generated password")
         copy(password)
 
     mp = getpass("Master password: ")
@@ -63,7 +66,8 @@ def generate(amount, length):
     if amount == 1:
         password = generate_password(length)
         copy(password)
-        print(password)
+        if Config().show_password_on_auto_generation:
+            print(password)
         print("Copied to clipboard!")
         del password
     else:
@@ -79,22 +83,34 @@ def get_list():
 
 
 @click.command("init")
-def init():
-    if is_vault_initialised():
+@click.option("-vault", "-v")
+def init(vault):
+    if vault is None:
+        vault = Config().current_vault
+
+    if is_vault_initialised(vault):
         print("Your vault is already initialised!")
     else:
-        mp = getpass("Master password: ")
+        mp = getpass("New vault's master password: ")
         if not getpass("Confirm master password: ") == mp:
             print("\033[91mError: Master passwords doesn't match\033[0m")
             del mp
             return
-        Vault("vault").save_vault(mp)
+        Vault(vault).save_vault(mp)
+        cfg = Config()
+        cfg.current_vault = vault
+        cfg.save()
         print("Vault initialised!")
 
 
 @click.command("changepass")
-def change_pass():
-    v = get_vault(getpass("Old master password: "))
+@click.option("--vault", "-v")
+def change_pass(vault):
+    if vault is None or not is_vault_initialised(vault):
+        vault = Config().current_vault
+
+    print(f"Changing the master password of \"{vault}\"")
+    v = get_vault(getpass("Old master password: "), vault)
     n_mp = getpass("New master password: ")
     if not getpass("Confirm new master password: ") == n_mp:
         print("\033[91mError: New master password doesn't match\033[0m")
@@ -126,6 +142,12 @@ def config():
         case "gen_pass_punctuation":
             value = input(f"{configApp.result[0]} (0 or 1): ")
             cfg.password_punctuation = bool(int(value))
+        case "show_password_on_auto_generation":
+            value = input(f"{configApp.result[0]} (0 or 1): ")
+            cfg.show_password_on_auto_generation = bool(int(value))
+        case "current_vault":
+            value = input(f"{configApp.result[0]} (ex: vaultname): ")
+            cfg.current_vault = value
     cfg.save()
     print("Successfully modified config!")
 
@@ -176,6 +198,42 @@ def modify(pid, change, to):
     print("Successfully modified a password entry!")
 
 
+@click.command("info")
+def info():
+    print(f"Config path: \"{data_dir / "config.json"}\"")
+    print(f"Current vault path: \"{data_dir / f"{Config().current_vault}.ospm"}\"")
+    print()
+    print("Github: https://github.com/Anvarys/python-password-manager")
+
+
+@click.command("switch")
+@click.argument("vault")
+def switch(vault):
+    if vault is None:
+        raise Exception("Please enter a vault name")
+
+    if is_vault_initialised(vault):
+        print(f"Switched to \"{vault}\"!")
+
+    else:
+        mp = getpass("New vault's master password: ")
+        if not getpass("Confirm master password: ") == mp:
+            print("\033[91mError: Master passwords doesn't match\033[0m")
+            del mp
+            return
+
+        Vault(vault).save_vault(mp)
+        del mp
+
+        print(f"Successfully created new vault: \"{vault}\"!")
+
+    cfg = Config()
+    cfg.current_vault = vault
+    cfg.save()
+
+
+cli.add_command(switch)
+cli.add_command(info)
 cli.add_command(modify)
 cli.add_command(change_pass)
 cli.add_command(add)

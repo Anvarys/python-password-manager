@@ -13,6 +13,8 @@ class Config:
             self.password_ascii = True
             self.password_punctuation = False
             self.password_digits = True
+            self.show_password_on_auto_generation = True
+            self.current_vault = "vault"
         else:
             if not self.exists():
                 self.init()
@@ -22,6 +24,8 @@ class Config:
                 self.password_ascii = obj["gen_pass_ascii_letters"]
                 self.password_digits = obj["gen_pass_digits"]
                 self.password_punctuation = obj["gen_pass_punctuation"]
+                self.show_password_on_auto_generation = obj["show_password_on_auto_generation"]
+                self.current_vault = obj["current_vault"]
 
     @classmethod
     def exists(cls) -> bool:
@@ -46,5 +50,7 @@ class Config:
             "default_password_length": self.default_password_length,
             "gen_pass_ascii_letters": self.password_ascii,
             "gen_pass_punctuation": self.password_punctuation,
-            "gen_pass_digits": self.password_digits
+            "gen_pass_digits": self.password_digits,
+            "show_password_on_auto_generation": self.show_password_on_auto_generation,
+            "current_vault": self.current_vault
         }

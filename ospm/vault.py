@@ -6,6 +6,7 @@ from nacl.exceptions import CryptoError
 from argon2.low_level import hash_secret_raw, Type
 from platformdirs import user_data_dir
 from dataclasses import dataclass
+from .config import Config
 
 data_dir = Path(user_data_dir("ospm"))
 
@@ -80,20 +81,20 @@ def get_vault_file_data(vault_name: str) -> bytes:
     if not Path.is_dir(data_dir):
         data_dir.mkdir(parents=True)
 
-    with open(data_dir / vault_name, "rb") as f:
+    with open(data_dir / (vault_name + ".ospm"), "rb") as f:
         return f.read()
 
 
-def verify_vault_initialised(vault_name: str = "vault.ospm"):
+def verify_vault_initialised(vault_name: str = Config().current_vault):
     if not Path.is_dir(data_dir):
         data_dir.mkdir(parents=True)
 
-    if not Path.exists(data_dir / vault_name):
+    if not Path.exists(data_dir / (vault_name + ".ospm")):
         print("First initialise your vault -\033[94m ospm init")
         exit()
 
 
-def get_vault(master_password: str, vault_name: str = "vault.ospm") -> Vault:
+def get_vault(master_password: str, vault_name: str = Config().current_vault) -> Vault:
     return Vault.from_bytes(
         decrypt(
             derive_key(master_password),
@@ -102,8 +103,8 @@ def get_vault(master_password: str, vault_name: str = "vault.ospm") -> Vault:
     )
 
 
-def is_vault_initialised(vault_name: str = "vault.ospm"):
+def is_vault_initialised(vault_name: str = Config().current_vault):
     if not Path.is_dir(data_dir):
         data_dir.mkdir(parents=True)
 
-    return Path.exists(data_dir / vault_name)
+    return Path.exists(data_dir / (vault_name + ".ospm"))
